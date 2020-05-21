@@ -10,37 +10,75 @@
 <script>
 import axios from "axios";
 
-import highlightSelection from "../Highlight";
+import { highlightSelection } from "../Highlight";
 
-let api_url = "http://127.0.0.1:5000/";
+let api_url = "http://127.0.0.1:5000";
+
+function getContent() {
+  return document
+    .getElementsByClassName("html-content")[0]
+    .getElementsByTagName("p")[0].innerHTML;
+}
 
 export default {
   name: "HtmlView",
   data() {
     return {
       content: null,
-      id: null
+      id: null,
+      content_history: []
     };
   },
   methods: {
     getNext: function() {
+      if (this.isHistoryChanged()) {
+        this.send(
+          this.id,
+          this.content_history[this.content_history.length - 1]
+        );
+      }
+      this.getNextData();
+    },
+    send: function() {
       axios
-        .get(api_url)
+        .post(api_url + "/post")
+        .then(response => console.log(response))
+        .catch(err => console.log(err));
+    },
+    getNextData: function() {
+      axios
+        .get(api_url + "/get")
         .then(response => {
           this.content = response.data.html_page;
           this.id = response.data.id;
+          this.content_history = [this.content];
         })
         .catch(err => console.log(err));
     },
-    highlight: function() {
-      highlightSelection();
+    isHistoryChanged: function() {
+      return this.content_history.length > 1;
+    },
+    undoChange: function() {
+      if (this.isHistoryChanged()) {
+        console.log("Reverting to previous change");
+        console.log(this.content_history.length);
+        this.content_history.pop();
+        console.log(this.content_history.length);
+        this.content = this.content_history[this.content_history.length - 1];
+      }
     }
   },
   mounted() {
-    this.getNext();
     window.addEventListener("keyup", event => {
       if (event.keyCode === 13) {
-        this.highlight();
+        highlightSelection();
+        let content = getContent();
+        this.content = content;
+        this.content_history.push(content);
+      } else if (event.keyCode === 78) {
+        this.getNext();
+      } else if (event.keyCode === 90) {
+        this.undoChange();
       }
     });
   }

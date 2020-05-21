@@ -4,6 +4,8 @@ function highlightRange(range) {
         "style",
         "background-color: yellow; display: inline;"
     );
+    // Could that be used
+    newNode.setAttribute("matchGroup", true);
     range.surroundContents(newNode);
 }
 
@@ -72,11 +74,12 @@ function getSafeRanges(dangerous) {
 
 function highlightSelection() {
     var userSelection = window.getSelection().getRangeAt(0);
-    console.log(userSelection);
     var safeRanges = getSafeRanges(userSelection);
     for (var i = 0; i < safeRanges.length; i++) {
-        highlightRange(safeRanges[i]);
+        if (safeRanges[i].endOffset - safeRanges[i].startOffset > 0) {
+            highlightRange(safeRanges[i]);
+        }
     }
 }
 
-export default highlightSelection;
+export { highlightSelection };
